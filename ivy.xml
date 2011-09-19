@@ -1,0 +1,19 @@
+<ivy-module version="2.0">
+
+    <info organisation="com.cengage.covalent.modules" 
+            module="${module.id}" 
+            revision="${module.version}"/>
+
+    <configurations>
+        <conf name="default" />
+        <conf name="build" description="specifies dependencies required for building the module" />
+    </configurations>
+    
+    <publications>
+        <artifact name="${module.id}" type="zip" ext="zip" conf="default"/>
+    </publications>
+
+    <dependencies>
+    </dependencies>
+
+</ivy-module>

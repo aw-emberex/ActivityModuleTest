@@ -1,0 +1,197 @@
+<?xml version="1.0"?>
+<project name="cam" basedir="." default="build"  xmlns:ivy="antlib:org.apache.ivy.ant">
+	
+	<description>Activity Module</description>
+	
+	<!-- ============================================================== -->
+    <!-- Properties                                                     -->
+    <!-- ============================================================== -->
+    
+    <!-- Import property files -->
+    <property file="module.properties"/>
+    <property file="build.properties"/>
+	
+	<!-- Misc. -->
+    <property name="module.id" value="${ant.project.name}"/>
+    <property name="build.min.file.basename" value="${module.id}_min"/>
+
+	<!-- Project directories -->
+    <property name="source.dir" value="src"/>
+    <property name="library.dir" value="lib"/>
+    <property name="include.dir" value="include"/>
+    <property name="extern.dir" value="extern"/>  
+	
+	<!-- Project files -->
+	<property name="build.config.script.filepath" value="${include.dir}/build/config_deploy.js"/>
+	
+	<!-- Generated Directories -->
+    <property name="build.dir" value="build"/>
+    <property name="concat.dir" value="${build.dir}/concat"/>
+	<property name="compile.dir" value="${build.dir}/compile"/>
+    <property name="deploy.dir" value="${build.dir}/deploy"/>
+	<property name="publish.dir" value="${build.dir}/publish"/>
+    
+    <!-- Generated Files -->
+    <property name="build.js.filename"  value="${module.id}.js"/>
+	<property name="build.min.js.filename" value="${build.min.file.basename}.js"/>
+	<property name="cross.domain.js.filename" value="crossDomainRest.js"/>
+    
+	<!-- ================================================================== -->
+    <!-- Includes/Requirements                                              -->
+    <!-- ================================================================== -->
+    
+    <import file="sharedBuild/moduleHelper.xml"/>
+	<taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask" classpath="${library.dir}/compiler.jar"/>
+	    
+    <!-- ============================================================== -->
+    <!-- Targets                                                        -->
+    <!-- ============================================================== -->
+	
+	<target name="concat"
+	    description="--> Merge all necessary files together into a single file." >
+		
+		<delete dir="${concat.dir}" />
+        <mkdir dir="${concat.dir}" />
+
+		<!-- Covalent Activity Module -->
+        <concat destfile="${concat.dir}/${build.js.filename}" overwrite="true">
+        	<filelist dir="${include.dir}">
+                <file name="json2.js" />
+                <file name="easyXDM-custom.min.js" />
+            </filelist>
+            <filelist dir="${source.dir}">
+                <file name="CovalentUtils.js" />
+                <file name="CrossDomainRestService.js" />
+                <file name="ScriptLoader.js" />
+                <file name="CovalentActivityService.js" />
+                <file name="CovalentActivity.js" />
+                <file name="CovalentItemService.js" />
+                <file name="CovalentItem.js" />             
+            </filelist>
+        </concat>
+        
+		<!-- Cross Domain Rest -->
+        <concat destfile="${concat.dir}/${cross.domain.js.filename}" overwrite="true">
+            <filelist dir="${include.dir}">
+                <file name="easyXDM-custom.min.js" />
+            </filelist>
+            <filelist dir="${source.dir}">
+                <file name="CovalentUtils.js" />
+                <file name="CrossDomainRestService.js" />        
+            </filelist>
+        </concat>
+    </target>
+	
+	<target name="compile-easyxdm">
+        <mkdir dir="build"/>
+        <jscomp output="build/easyXDM-custom.min.js" compilationLevel="whitespace" warning="quiet" debug="false">
+            <sources dir="include">
+                <file name="json2.js" />
+                <file name="easyXDM-custom.js" />
+            </sources>
+        </jscomp>
+    </target>
+    
+    <target name="compile" 
+    	   description="--> Compile the project" 
+    	   depends="concat">
+    	
+    	<delete dir="${compile.dir}"/>
+        <mkdir dir="${compile.dir}"/>
+    	
+        <!-- Covalent Activity Module -->
+    	<jscomp output="${compile.dir}/${build.min.js.filename}" compilationLevel="whitespace" warning="quiet" debug="false">
+           <externs dir="${extern.dir}">
+                <file name="webkit_console.js" />
+                <file name="jquery-1.4.3.externs.js" />
+                <file name="activityhandle.js" />
+            	<file name="json2.externs.js"/>
+            </externs>
+            <sources dir="${concat.dir}">
+            	<file name="${build.js.filename}" />
+            </sources>
+    	</jscomp>
+    	
+    	<!-- Cross Domain Rest -->
+    	<jscomp output="${compile.dir}/${cross.domain.js.filename}" compilationLevel="whitespace" warning="quiet" debug="false">
+            <sources dir="${concat.dir}">
+                <file name="${cross.domain.js.filename}" />
+            </sources>
+        </jscomp>    	
+    </target>
+	
+	<target name="build"
+	    description="--> Build the project and prepare it for deployment"
+		depends="compile">
+	
+		<delete dir="${deploy.dir}"/>
+		<mkdir dir="${deploy.dir}"/>
+		
+		<concat destfile="${deploy.dir}/${build.min.js.filename}" overwrite="true">
+            <header file="${build.config.script.filepath}"/>
+			<filelist dir="${compile.dir}">
+                <file name="${build.min.js.filename}"/>
+            </filelist>
+            <filterchain>
+                <replacetokens>
+                  <token key="module.version" value="${module.version}"/>
+                </replacetokens>
+            </filterchain>
+        </concat>
+		
+		<copy file="${compile.dir}/${cross.domain.js.filename}"
+			  todir="${deploy.dir}"
+			  overwrite="true"/>
+		
+		<copy file="module.properties" 
+              todir="${deploy.dir}" 
+              overwrite="true"/>
+	</target>
+	
+	<target name="build-concat"
+	    description="--> Build the project (non-minified) and prepare it for deployment"
+	    depends="concat">
+	
+		<delete dir="${deploy.dir}"/>
+        <mkdir dir="${deploy.dir}"/>
+        
+		<concat destfile="${deploy.dir}/${build.js.filename}" overwrite="true">
+            <header file="${build.config.script.filepath}" />
+			<filelist dir="${concat.dir}">
+			    <file name="${build.js.filename}"/>
+			</filelist>
+            <filterchain>
+                <replacetokens>
+                  <token key="module.version" value="${module.version}"/>
+                </replacetokens>
+            </filterchain>
+        </concat>
+		
+		<copy file="${concat.dir}/${cross.domain.js.filename}"
+              todir="${deploy.dir}"
+              overwrite="true"/>
+        
+        <copy file="module.properties" 
+              todir="${deploy.dir}" 
+              overwrite="true"/>
+	</target>
+	
+    <target name="deploy-local-concat" 
+    	description="--> Deploy the module to a Covalent server"
+    	depends="build-concat">
+    	<antcall target="moduleHelper-deploy-local"/>
+    </target>
+
+	<target name="deploy-local"
+	    description="--> Deploy the module to a Covalent server"
+	    depends="build">
+		<antcall target="moduleHelper-deploy-local"/>
+	</target>
+	
+	<target name="publish" 
+            description="--> Publish artifacts to repository" 
+            depends="build">
+        <antcall target="moduleHelper-publish"/>
+    </target>
+
+</project>
