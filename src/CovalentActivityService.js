@@ -41,6 +41,12 @@ CovalentActivityService.prototype.getActivityStatus = function(callback, uuid, e
     this.restService.requestJson(url, 'POST', null, callback, error);
 }
 
+CovalentActivityService.prototype.getActivityState = function(callback, uuid, error)
+{
+    var url = "/ilrn/service/covalentActivity/state/"+uuid;
+    this.restService.requestJson(url, 'GET', null, callback, error);
+}
+
 CovalentActivityService.prototype.closeActivity = function(callback, uuid, error)
 {
     var url = "/ilrn/service/covalentActivity/close/"+uuid;
