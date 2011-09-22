@@ -17,7 +17,7 @@
             
                 return function(secureScriptResult){
                     covalentItem.settings.secureParams = secureScriptResult.nextSecureParams;
-                    covalentItem.setItemHandle( eval(secureScriptResult.script)() );
+                    covalentItem.setItemHandle( eval(secureScriptResult.script) );
                 }
             
             })(this), this.settings);            
@@ -28,7 +28,7 @@
             this.itemService.getItemScript( (function(covalentItem){
             
                 return function(scriptResult){
-                    covalentItem.setItemHandle( eval(scriptResult.script)() );
+                    covalentItem.setItemHandle( eval(scriptResult.script) );
                 }
             
             })(this), this.settings);
@@ -75,7 +75,6 @@
                 answerData: this.itemHandle.getAnswerData(),
                 messageParams: messageParams,
                 restReceiverUrl: this.getRestReceiverUrl(),
-                drawMode: redraw? 'diff' : 'full',
                 redraw: redraw
             }
             this.itemService.secureGetItemScript( (function(covalentItem){
@@ -84,8 +83,8 @@
                     
                     if( redraw )
                     {
-                        var setupFn = eval(secureScriptResult.script);
-                        covalentItem.setItemHandle( setupFn(covalentItem.itemHandle) );
+                        covalentItem.itemHandle.destroy();
+                        covalentItem.setItemHandle( eval(secureScriptResult.script) );
                     }
                     
                     covalentItem.settings.secureParams = secureScriptResult.nextSecureParams;
@@ -111,8 +110,8 @@
                     
                     if( redraw )
                     {
-                        var setupFn = eval(secureScriptResult.script);
-                        covalentItem.setItemHandle( setupFn(covalentItem.itemHandle) );
+                        covalentItem.itemHandle.destroy();
+                        covalentItem.setItemHandle( eval(scriptResult.script) );
                     }
                     
                     callback( scriptResult.state );
