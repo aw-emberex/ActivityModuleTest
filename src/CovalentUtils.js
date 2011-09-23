@@ -17,7 +17,7 @@ CovalentUtils.resolveCovalentHost = function(sourceFileName)
 CovalentUtils.findCovalentApiScriptElement = function(sourceFileName) {
     if (! sourceFileName) {
         // TODO: This filename should come from build configuration somehow
-        sourceFileName = "CovalentApi.js";
+        sourceFileName = "cam_min.js";
     }
     var scriptElement = jQuery('script[src$="'+ sourceFileName +'"]');
     return (scriptElement.length ? scriptElement : null);        
