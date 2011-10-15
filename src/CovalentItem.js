@@ -1,14 +1,13 @@
-(function(){
+(function(jQuery){
 
     function CovalentItem(settings){
     
         if( !settings.restReceiverUrl )
             throw 'CovalentItem: settings.restReceiverUrl cannot be blank.';
-    
+
+        this.stateChangeListeners = [];
         this.itemHandle = null;
-    
         this.settings = settings;
-    
         this.itemService = new CovalentItemService(this.getRestReceiverUrl());
         
         if( this.settings.secureParams ){
@@ -44,6 +43,25 @@
         this.itemHandle = handle;
         this.itemHandle.setItemRendererOverride(this.settings.itemRendererOverride);
         this.itemHandle.render( this.getContainerElement() );
+        
+        var notifyStateChangeListeners = (function(covalentItem){
+            return function(stateChangeMessage)
+            {
+                var fn = (function(){
+                    return function(i, listener){
+                        listener(stateChangeMessage);
+                    }
+                })();
+                jQuery.each(covalentItem.stateChangeListeners, fn);
+            }
+        })(this);
+        
+        this.itemHandle.setSubItemStateChangeListener(notifyStateChangeListeners);
+    }
+    
+    CovalentItem.prototype.addItemStateChangeListener = function(listener)
+    {
+        this.stateChangeListeners.push(listener);
     }
     
     CovalentItem.prototype.getItemService = function()
@@ -139,13 +157,6 @@
         return typeof(this.settings.secureParams) != 'undefined' && this.settings.secureParams != null;
     }
     
-    CovalentItem.prototype.notifyStateChangeListeners = function(state)
-    {
-        for(var i = 0; i < this.stateChangeListeners.length; i++){
-            this.stateChangeListeners[i](state);
-        }
-    }
-    
     CovalentItem.prototype.destroy = function()
     {
         this.itemHandle.destroy();
@@ -153,4 +164,4 @@
     
     window.com_cengage_covalent_widgets_CovalentItem = CovalentItem;
     
-})();
+})(jQuery);
