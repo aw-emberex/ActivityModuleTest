@@ -26,6 +26,7 @@
 	
 	<!-- Generated Directories -->
     <property name="build.dir" value="build"/>
+	<property name="lib.dir" value="${build.dir}/lib"/>
     <property name="concat.dir" value="${build.dir}/concat"/>
 	<property name="compile.dir" value="${build.dir}/compile"/>
     <property name="deploy.dir" value="${build.dir}/deploy"/>
@@ -49,8 +50,20 @@
     <!-- Targets                                                        -->
     <!-- ============================================================== -->
 	
+	<target name="init" description="--> Initialize">
+        <!-- Use the "build" configuration when resolving if not specified before now -->
+		<antcall target="moduleHelper-retrieve-dependencies">
+            <param name="module.retrieved.dependencies.dir" value="${lib.dir}"/>
+            <param name="ivy.configuration" value="build"/>
+        </antcall>
+		<unzip dest="${lib.dir}">
+            <fileset dir="${lib.dir}" includes="**/*.zip" />
+        </unzip>
+    </target>
+	
 	<target name="concat"
-	    description="--> Merge all necessary files together into a single file." >
+	    description="--> Merge all necessary files together into a single file." 
+		depends="init">
 		
 		<delete dir="${concat.dir}" />
         <mkdir dir="${concat.dir}" />
@@ -62,14 +75,12 @@
                 <file name="CrossDomainRestService.js" />
                 <file name="ScriptLoader.js" />
                 <file name="CovalentActivityService.js" />
-                <file name="CovalentActivity.js" />
-                <file name="CovalentItemService.js" />
-                <file name="CovalentItem.js" />             
+                <file name="CovalentActivity.js" /> 
             </filelist>
         </concat>
         
         <!-- CAM with dependencies -->
-        <concat destfile="${concat.dir}/${build.js.filename}" overwrite="true">
+		<concat destfile="${concat.dir}/${build.js.filename}" overwrite="true">
         	<filelist dir="${include.dir}">
                 <file name="json2.js" />
                 <file name="easyXDM-custom.min.js" />
@@ -77,6 +88,9 @@
             <filelist dir="${concat.dir}">
                 <file name="${build.nolibs.js.filename}" />
             </filelist>
+        	<filelist dir="${lib.dir}/cim">
+        	    <file name="cim_min.js" />
+        	</filelist>
         </concat>
         
 		<!-- Cross Domain Rest -->

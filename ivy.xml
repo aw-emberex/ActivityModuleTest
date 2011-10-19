@@ -14,6 +14,8 @@
     </publications>
 
     <dependencies>
+        <dependency org="com.cengage.covalent.modules" name="cim" rev="${cim.version}" conf="build->default" />
+        <dependency org="com.cengage.covalent.modules" name="cim" rev="latest.integration" conf="default->default" />
     </dependencies>
 
 </ivy-module>
