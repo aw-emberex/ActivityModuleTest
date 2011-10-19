@@ -135,6 +135,14 @@
         }
     }
     
+    CovalentActivity.prototype.navigateToPreviouslyVisitedStep = function(callback)
+    {
+    	if(this.activityHandle)
+    	{
+    		this.activityHandle.navigateToPreviouslyVisitedStep(callback);
+    	}
+    }
+    
     window['com_cengage_covalent_widgets_CovalentActivity'] = CovalentActivity;
     CovalentActivity.prototype['addActivityStateChangeListener'] = CovalentActivity.prototype.addActivityStateChangeListener;
     CovalentActivity.prototype['addActivityFinishedListener'] = CovalentActivity.prototype.addActivityFinishedListener;
