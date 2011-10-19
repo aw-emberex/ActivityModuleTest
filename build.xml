@@ -13,7 +13,7 @@
 	
 	<!-- Misc. -->
     <property name="module.id" value="${ant.project.name}"/>
-    <property name="build.min.file.basename" value="${module.id}_min"/>
+    <property name="build.file.basename" value="${module.id}"/>
 
 	<!-- Project directories -->
     <property name="source.dir" value="src"/>
@@ -32,8 +32,10 @@
 	<property name="publish.dir" value="${build.dir}/publish"/>
     
     <!-- Generated Files -->
-    <property name="build.js.filename"  value="${module.id}.js"/>
-	<property name="build.min.js.filename" value="${build.min.file.basename}.js"/>
+    <property name="build.js.filename" value="${build.file.basename}.js"/>
+	<property name="build.min.js.filename" value="${build.file.basename}_min.js"/>
+    <property name="build.nolibs.js.filename" value="${build.file.basename}_nolibs.js"/>
+    <property name="build.nolibs.min.js.filename" value="${build.file.basename}_nolibs_min.js"/>
 	<property name="cross.domain.js.filename" value="crossDomainRest.js"/>
     
 	<!-- ================================================================== -->
@@ -53,12 +55,8 @@
 		<delete dir="${concat.dir}" />
         <mkdir dir="${concat.dir}" />
 
-		<!-- Covalent Activity Module -->
-        <concat destfile="${concat.dir}/${build.js.filename}" overwrite="true">
-        	<filelist dir="${include.dir}">
-                <file name="json2.js" />
-                <file name="easyXDM-custom.min.js" />
-            </filelist>
+		<!-- CAM without dependencies -->
+        <concat destfile="${concat.dir}/${build.nolibs.js.filename}" overwrite="true">
             <filelist dir="${source.dir}">
                 <file name="CovalentUtils.js" />
                 <file name="CrossDomainRestService.js" />
@@ -67,6 +65,17 @@
                 <file name="CovalentActivity.js" />
                 <file name="CovalentItemService.js" />
                 <file name="CovalentItem.js" />             
+            </filelist>
+        </concat>
+        
+        <!-- CAM with dependencies -->
+        <concat destfile="${concat.dir}/${build.js.filename}" overwrite="true">
+        	<filelist dir="${include.dir}">
+                <file name="json2.js" />
+                <file name="easyXDM-custom.min.js" />
+            </filelist>
+            <filelist dir="${concat.dir}">
+                <file name="${build.nolibs.js.filename}" />
             </filelist>
         </concat>
         
@@ -99,8 +108,21 @@
     	<delete dir="${compile.dir}"/>
         <mkdir dir="${compile.dir}"/>
     	
-        <!-- Covalent Activity Module -->
-    	<jscomp output="${compile.dir}/${build.min.js.filename}" compilationLevel="whitespace" warning="quiet" debug="false">
+        <!-- CAM with dependencies -->
+        <jscomp output="${compile.dir}/${build.min.js.filename}" compilationLevel="whitespace" warning="quiet" debug="false">
+           <externs dir="${extern.dir}">
+                <file name="webkit_console.js" />
+                <file name="jquery-1.4.3.externs.js" />
+                <file name="activityhandle.js" />
+                <file name="json2.externs.js"/>
+            </externs>
+            <sources dir="${concat.dir}">
+                <file name="${build.js.filename}" />
+            </sources>
+        </jscomp>
+    	
+        <!-- CAM without dependencies -->
+    	<jscomp output="${compile.dir}/${build.nolibs.min.js.filename}" compilationLevel="whitespace" warning="quiet" debug="false">
            <externs dir="${extern.dir}">
                 <file name="webkit_console.js" />
                 <file name="jquery-1.4.3.externs.js" />
@@ -108,10 +130,10 @@
             	<file name="json2.externs.js"/>
             </externs>
             <sources dir="${concat.dir}">
-            	<file name="${build.js.filename}" />
+            	<file name="${build.nolibs.js.filename}" />
             </sources>
     	</jscomp>
-    	
+        
     	<!-- Cross Domain Rest -->
     	<jscomp output="${compile.dir}/${cross.domain.js.filename}" compilationLevel="whitespace" warning="quiet" debug="false">
             <sources dir="${concat.dir}">
@@ -126,7 +148,11 @@
 	
 		<delete dir="${deploy.dir}"/>
 		<mkdir dir="${deploy.dir}"/>
-		
+        
+        <!-- Prepend minified files with header; this has to be done after compile step
+             since compilation will remove all comments. -->
+        
+        <!-- CAM with dependencies -->		
 		<concat destfile="${deploy.dir}/${build.min.js.filename}" overwrite="true">
             <header file="${build.config.script.filepath}"/>
 			<filelist dir="${compile.dir}">
@@ -138,7 +164,21 @@
                 </replacetokens>
             </filterchain>
         </concat>
-		
+        
+        <!-- CAM without dependendies -->
+        <concat destfile="${deploy.dir}/${build.nolibs.min.js.filename}" overwrite="true">
+            <header file="${build.config.script.filepath}"/>
+            <filelist dir="${compile.dir}">
+                <file name="${build.nolibs.min.js.filename}"/>
+            </filelist>
+            <filterchain>
+                <replacetokens>
+                  <token key="module.version" value="${module.version}"/>
+                </replacetokens>
+            </filterchain>
+        </concat>
+        
+        <!-- Cross Domain Rest -->
 		<copy file="${compile.dir}/${cross.domain.js.filename}"
 			  todir="${deploy.dir}"
 			  overwrite="true"/>
@@ -167,6 +207,18 @@
             </filterchain>
         </concat>
 		
+        <concat destfile="${deploy.dir}/${build.nolibs.js.filename}" overwrite="true">
+            <header file="${build.config.script.filepath}" />
+            <filelist dir="${concat.dir}">
+                <file name="${build.nolibs.js.filename}"/>
+            </filelist>
+            <filterchain>
+                <replacetokens>
+                  <token key="module.version" value="${module.version}"/>
+                </replacetokens>
+            </filterchain>
+        </concat>
+        
 		<copy file="${concat.dir}/${cross.domain.js.filename}"
               todir="${deploy.dir}"
               overwrite="true"/>
@@ -192,6 +244,11 @@
             description="--> Publish artifacts to repository" 
             depends="build">
         <antcall target="moduleHelper-publish"/>
+    </target>
+    
+    <target name="clean"
+            description="--> Clean the project">
+        <delete dir="${build.dir}"/>
     </target>
 
 </project>
