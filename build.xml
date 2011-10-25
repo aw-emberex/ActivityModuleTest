@@ -17,7 +17,6 @@
 
 	<!-- Project directories -->
     <property name="source.dir" value="src"/>
-    <property name="library.dir" value="lib"/>
     <property name="include.dir" value="include"/>
     <property name="extern.dir" value="extern"/>  
 	
@@ -44,7 +43,7 @@
     <!-- ================================================================== -->
     
     <import file="sharedBuild/moduleHelper.xml"/>
-	<taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask" classpath="${library.dir}/compiler.jar"/>
+    <import file="sharedBuild/jsCompileHelper.xml"/>
 	    
     <!-- ============================================================== -->
     <!-- Targets                                                        -->
@@ -191,7 +190,7 @@
                 </replacetokens>
             </filterchain>
         </concat>
-        
+		
         <!-- Cross Domain Rest -->
 		<copy file="${compile.dir}/${cross.domain.js.filename}"
 			  todir="${deploy.dir}"
