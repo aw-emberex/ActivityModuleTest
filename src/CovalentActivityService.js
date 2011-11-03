@@ -97,7 +97,7 @@ CovalentActivityService.prototype.nextStep = function(callback, activityLocator,
 
 CovalentActivityService.prototype.submitItemResult = function(callback, activityLocator, encryptedScoreAndState, itemUid, itemAttempted, error)
 {
-    var url = "/ilrn/service/covalentActivity/" + activityLocator + "/item/" + itemUid;
+    var url = "/ilrn/service/covalentActivity/" + activityLocator + "/item/" + itemUid + "/result";
     
     var params = {
         encryptedScoreAndState: encryptedScoreAndState,
