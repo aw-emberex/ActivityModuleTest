@@ -111,6 +111,6 @@ and update the version number.  Commit your changes to the project.
 Dependencies
 -------------------------------------------------------------------------------
 
-The following libraries are included in this project:
-
-- EasyXDM 2.4.10.104
+TODO: Mention cim and cxd modules
+This project requires jQuery 1.5.1 or later be installed on the page where it 
+is to be used.

@@ -2,7 +2,7 @@ function CovalentUtils(){}
 
 CovalentUtils.resolveCovalentHost = function(sourceFileName)
 {
-    var scriptElement = CovalentUtils.findCovalentApiScriptElement(sourceFileName);
+    var scriptElement = jQuery('script[src$="'+ sourceFileName +'"]');
     if (scriptElement) {
         var host = scriptElement.attr('src').match(new RegExp("^\\w+:\\/\\/([^/]+)"));
 
@@ -11,14 +11,5 @@ CovalentUtils.resolveCovalentHost = function(sourceFileName)
         }
     }
     
-    return window.location.host;
-}
-
-CovalentUtils.findCovalentApiScriptElement = function(sourceFileName) {
-    if (! sourceFileName) {
-        // TODO: This filename should come from build configuration somehow
-        sourceFileName = "cam_min.js";
-    }
-    var scriptElement = jQuery('script[src$="'+ sourceFileName +'"]');
-    return (scriptElement.length ? scriptElement : null);        
-}
+    return null;
+};

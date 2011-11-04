@@ -18,6 +18,7 @@
 	<!-- Project directories -->
     <property name="source.dir" value="src"/>
     <property name="include.dir" value="include"/>
+	<property name="library.dir" value="lib"/>
     <property name="extern.dir" value="extern"/>  
 	
 	<!-- Project files -->
@@ -36,15 +37,14 @@
 	<property name="build.min.js.filename" value="${build.file.basename}_min.js"/>
     <property name="build.nolibs.js.filename" value="${build.file.basename}_nolibs.js"/>
     <property name="build.nolibs.min.js.filename" value="${build.file.basename}_nolibs_min.js"/>
-	<property name="cross.domain.js.filename" value="crossDomainRest.js"/>
     
 	<!-- ================================================================== -->
     <!-- Includes/Requirements                                              -->
     <!-- ================================================================== -->
     
     <import file="sharedBuild/moduleHelper.xml"/>
-    <import file="sharedBuild/jsCompileHelper.xml"/>
-	    
+    <taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask" classpath="${library.dir}/compiler.jar"/>
+    
     <!-- ============================================================== -->
     <!-- Targets                                                        -->
     <!-- ============================================================== -->
@@ -71,49 +71,25 @@
         <concat destfile="${concat.dir}/${build.nolibs.js.filename}" overwrite="true">
             <filelist dir="${source.dir}">
                 <file name="CovalentUtils.js" />
-                <file name="CrossDomainRestService.js" />
-                <file name="ScriptLoader.js" />
+        		<file name="CovalentActivity.js" /> 
                 <file name="CovalentActivityService.js" />
-                <file name="CovalentActivity.js" /> 
+            </filelist>
+            <filelist dir="${lib.dir}/cxd">
+                <file name="cxd_min.js" />
+            </filelist>
+            <filelist dir="${lib.dir}/cim">
+                <file name="cim_min.js" />
             </filelist>
         </concat>
         
         <!-- CAM with dependencies -->
 		<concat destfile="${concat.dir}/${build.js.filename}" overwrite="true">
-        	<filelist dir="${include.dir}">
-                <file name="json2.js" />
-                <file name="easyXDM-custom.min.js" />
-            </filelist>
             <filelist dir="${concat.dir}">
                 <file name="${build.nolibs.js.filename}" />
-            </filelist>
-        	<filelist dir="${lib.dir}/cim">
-        	    <file name="cim_min.js" />
-        	</filelist>
-        </concat>
-        
-		<!-- Cross Domain Rest -->
-        <concat destfile="${concat.dir}/${cross.domain.js.filename}" overwrite="true">
-            <filelist dir="${include.dir}">
-                <file name="easyXDM-custom.min.js" />
-            </filelist>
-            <filelist dir="${source.dir}">
-                <file name="CovalentUtils.js" />
-                <file name="CrossDomainRestService.js" />        
             </filelist>
         </concat>
     </target>
 	
-	<target name="compile-easyxdm">
-        <mkdir dir="build"/>
-        <jscomp output="build/easyXDM-custom.min.js" compilationLevel="whitespace" warning="quiet" debug="false">
-            <sources dir="include">
-                <file name="json2.js" />
-                <file name="easyXDM-custom.js" />
-            </sources>
-        </jscomp>
-    </target>
-    
     <target name="compile" 
     	   description="--> Compile the project" 
     	   depends="concat">
@@ -122,12 +98,11 @@
         <mkdir dir="${compile.dir}"/>
     	
         <!-- CAM with dependencies -->
-        <jscomp output="${compile.dir}/${build.min.js.filename}" compilationLevel="whitespace" warning="quiet" debug="false">
+        <jscomp output="${compile.dir}/${build.min.js.filename}" compilationLevel="simple" warning="quiet" debug="false">
            <externs dir="${extern.dir}">
                 <file name="webkit_console.js" />
                 <file name="jquery-1.4.3.externs.js" />
                 <file name="activityhandle.js" />
-                <file name="json2.externs.js"/>
             </externs>
             <sources dir="${concat.dir}">
                 <file name="${build.js.filename}" />
@@ -135,24 +110,16 @@
         </jscomp>
     	
         <!-- CAM without dependencies -->
-    	<jscomp output="${compile.dir}/${build.nolibs.min.js.filename}" compilationLevel="whitespace" warning="quiet" debug="false">
+    	<jscomp output="${compile.dir}/${build.nolibs.min.js.filename}" compilationLevel="simple" warning="quiet" debug="false">
            <externs dir="${extern.dir}">
                 <file name="webkit_console.js" />
                 <file name="jquery-1.4.3.externs.js" />
                 <file name="activityhandle.js" />
-            	<file name="json2.externs.js"/>
             </externs>
             <sources dir="${concat.dir}">
             	<file name="${build.nolibs.js.filename}" />
             </sources>
     	</jscomp>
-        
-    	<!-- Cross Domain Rest -->
-    	<jscomp output="${compile.dir}/${cross.domain.js.filename}" compilationLevel="whitespace" warning="quiet" debug="false">
-            <sources dir="${concat.dir}">
-                <file name="${cross.domain.js.filename}" />
-            </sources>
-        </jscomp>    	
     </target>
 	
 	<target name="build"
@@ -173,7 +140,8 @@
             </filelist>
             <filterchain>
                 <replacetokens>
-                  <token key="module.version" value="${module.version}"/>
+                	<token key="module.version" value="${module.version}"/>
+                	<token key="cam.script.filename" value="${build.min.js.filename}"/>
                 </replacetokens>
             </filterchain>
         </concat>
@@ -186,15 +154,11 @@
             </filelist>
             <filterchain>
                 <replacetokens>
-                  <token key="module.version" value="${module.version}"/>
+                    <token key="module.version" value="${module.version}"/>
+                	<token key="cam.script.filename" value="${build.nolibs.min.js.filename}"/>
                 </replacetokens>
             </filterchain>
         </concat>
-		
-        <!-- Cross Domain Rest -->
-		<copy file="${compile.dir}/${cross.domain.js.filename}"
-			  todir="${deploy.dir}"
-			  overwrite="true"/>
 		
 		<copy file="module.properties" 
               todir="${deploy.dir}" 
@@ -215,7 +179,8 @@
 			</filelist>
             <filterchain>
                 <replacetokens>
-                  <token key="module.version" value="${module.version}"/>
+                    <token key="module.version" value="${module.version}"/>
+                	<token key="cam.script.filename" value="${build.js.filename}"/>
                 </replacetokens>
             </filterchain>
         </concat>
@@ -227,14 +192,11 @@
             </filelist>
             <filterchain>
                 <replacetokens>
-                  <token key="module.version" value="${module.version}"/>
+                    <token key="module.version" value="${module.version}"/>
+                	<token key="cam.script.filename" value="${build.nolibs.js.filename}"/>
                 </replacetokens>
             </filterchain>
         </concat>
-        
-		<copy file="${concat.dir}/${cross.domain.js.filename}"
-              todir="${deploy.dir}"
-              overwrite="true"/>
         
         <copy file="module.properties" 
               todir="${deploy.dir}" 
