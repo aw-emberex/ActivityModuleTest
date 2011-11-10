@@ -9,9 +9,6 @@
 
         this.settings = settings;
         
-        // Clone the settings object for launch params since call to launch may modify the params object
-        var launchParams = jQuery.extend({}, settings);
-        
         var covalentHost = this.settings.covalentHost;
         if (covalentHost && typeof(covalentHost) != 'string') {
             throw new Error("Unrecognized value for 'covalentHost' setting.  Value must be a string.");
@@ -23,9 +20,9 @@
             if (typeof(errorHandler) != "function") {
                 throw new Error("Unrecognized value for 'error' setting.  Value must be a function.");
             }
-            // Remove the error handler function from the launch parameters
-            delete launchParams.error;
         }
+        
+        var launchParams = null;
         
         var handleLaunchResult = (function(covalentActivity){
             
@@ -52,14 +49,40 @@
         
         if (this.isSecure())
         {
+            //construct launch parameters
+            launchParams = {
+                secureParams: this.settings.secureParams
+            };
+            
             this.activityService.launchSecureActivity(handleLaunchResult, launchParams, errorHandler);
         }
         else if (this.settings.reviewMode)
         {
-        	this.activityService.launchReviewActivity(handleLaunchResult, launchParams, errorHandler);
+        	//construct launch parameters
+            launchParams = {
+                consumerId: this.settings.consumerId,
+                uuid: this.settings.uuid,
+                specification: this.settings.specification,
+                prebuildId: this.settings.prebuiltId,
+                activityOptions: this.settings.activityOptions,
+                persistent: this.settings.persistent
+            };
+            
+            this.activityService.launchReviewActivity(handleLaunchResult, launchParams, errorHandler);
         }
         else
         {
+            //construct launch parameters
+            launchParams = {
+                consumerId: this.settings.consumerId,
+                uuid: this.settings.uuid,
+                specification: this.settings.specification,
+                prebuildId: this.settings.prebuiltId,
+                activityOptions: this.settings.activityOptions,
+                persistent: this.settings.persistent,
+                serializedGrade: this.settings.serializedGrade
+            };
+            
             this.activityService.launchActivity(handleLaunchResult, launchParams, errorHandler);
         }
     }

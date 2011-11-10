@@ -75,17 +75,25 @@
                 <file name="CovalentActivityService.js" />
             </filelist>
             <filelist dir="${lib.dir}/cxd">
-                <file name="cxd_min.js" />
+                <file name="cxd_nolibs.js" />
             </filelist>
             <filelist dir="${lib.dir}/cim">
-                <file name="cim_min.js" />
+                <file name="cim_nolibs.js" />
             </filelist>
         </concat>
         
         <!-- CAM with dependencies -->
 		<concat destfile="${concat.dir}/${build.js.filename}" overwrite="true">
-            <filelist dir="${concat.dir}">
-                <file name="${build.nolibs.js.filename}" />
+			<filelist dir="${source.dir}">
+                <file name="CovalentUtils.js" />
+                <file name="CovalentActivity.js" /> 
+                <file name="CovalentActivityService.js" />
+            </filelist>
+            <filelist dir="${lib.dir}/cxd">
+                <file name="cxd.js" />
+            </filelist>
+            <filelist dir="${lib.dir}/cim">
+                <file name="cim.js" />
             </filelist>
         </concat>
     </target>
@@ -129,7 +137,7 @@
 		<delete dir="${deploy.dir}"/>
 		<mkdir dir="${deploy.dir}"/>
         
-        <!-- Prepend minified files with header; this has to be done after compile step
+        <!-- Prepend files with header; this has to be done after compile step for minified files
              since compilation will remove all comments. -->
         
         <!-- CAM with dependencies -->		
@@ -141,6 +149,7 @@
             <filterchain>
                 <replacetokens>
                 	<token key="module.version" value="${module.version}"/>
+                	<token key="module.id" value="${module.id}"/>
                 	<token key="cam.script.filename" value="${build.min.js.filename}"/>
                 </replacetokens>
             </filterchain>
@@ -155,23 +164,13 @@
             <filterchain>
                 <replacetokens>
                     <token key="module.version" value="${module.version}"/>
+                    <token key="module.id" value="${module.id}"/>
                 	<token key="cam.script.filename" value="${build.nolibs.min.js.filename}"/>
                 </replacetokens>
             </filterchain>
         </concat>
 		
-		<copy file="module.properties" 
-              todir="${deploy.dir}" 
-              overwrite="true"/>
-	</target>
-	
-	<target name="build-concat"
-	    description="--> Build the project (non-minified) and prepare it for deployment"
-	    depends="concat">
-	
-		<delete dir="${deploy.dir}"/>
-        <mkdir dir="${deploy.dir}"/>
-        
+		<!-- CAM with dependencies non-minified -->
 		<concat destfile="${deploy.dir}/${build.js.filename}" overwrite="true">
             <header file="${build.config.script.filepath}" />
 			<filelist dir="${concat.dir}">
@@ -180,11 +179,13 @@
             <filterchain>
                 <replacetokens>
                     <token key="module.version" value="${module.version}"/>
+                    <token key="module.id" value="${module.id}"/>
                 	<token key="cam.script.filename" value="${build.js.filename}"/>
                 </replacetokens>
             </filterchain>
         </concat>
 		
+		<!-- CAM without dependencies non-minified -->
         <concat destfile="${deploy.dir}/${build.nolibs.js.filename}" overwrite="true">
             <header file="${build.config.script.filepath}" />
             <filelist dir="${concat.dir}">
@@ -193,6 +194,7 @@
             <filterchain>
                 <replacetokens>
                     <token key="module.version" value="${module.version}"/>
+                    <token key="module.id" value="${module.id}"/>
                 	<token key="cam.script.filename" value="${build.nolibs.js.filename}"/>
                 </replacetokens>
             </filterchain>
@@ -203,13 +205,7 @@
               overwrite="true"/>
 	</target>
 	
-    <target name="deploy-local-concat" 
-    	description="--> Deploy the module to a Covalent server"
-    	depends="build-concat">
-    	<antcall target="moduleHelper-deploy-local"/>
-    </target>
-
-	<target name="deploy-local"
+    <target name="deploy-local"
 	    description="--> Deploy the module to a Covalent server"
 	    depends="build">
 		<antcall target="moduleHelper-deploy-local"/>
