@@ -113,3 +113,9 @@ CovalentActivityService.prototype.submitActivity = function(onSuccess, activityL
 {
     this.restService.postRequestString("/"+activityLocator, null, onSuccess, onFailure);
 };
+
+CovalentActivityService.prototype.getProperties = function(onSuccess, parameters, onFailure)
+{
+    this._prepareLaunchParams(parameters);
+    this.restService.postRequestJSON("/properties", parameters, onSuccess, onFailure);    
+};
