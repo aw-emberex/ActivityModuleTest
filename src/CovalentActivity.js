@@ -144,6 +144,14 @@
         }
     }
     
+    CovalentActivity.prototype.save = function()
+    {
+        if (this.activityHandle) 
+        {
+            this.activityHandle.save();
+        }
+    }
+    
     CovalentActivity.prototype.destroy = function() 
     {
         if (this.activityHandle) 
