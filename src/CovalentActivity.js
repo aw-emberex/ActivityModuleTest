@@ -4,6 +4,7 @@
     
         this.stateChangeListeners = [];
         this.finishedListeners = [];
+        this.endNavigationListener = null;
     
         this.activityHandle = null;
 
@@ -41,6 +42,10 @@
                 if (settings.itemRendererOverride && typeof(covalentActivity.activityHandle.setItemRendererOverride) == "function") {
                     covalentActivity.activityHandle.setItemRendererOverride(settings.itemRendererOverride);
                 }
+                
+                covalentActivity.activityHandle.addActivityEndNavigationListener( function(activityState){
+                    covalentActivity.notifyActivityEndNavigationListener(activityState);
+                } );
                 
                 covalentActivity.activityHandle.render( covalentActivity.getContainerElement() );
             }
@@ -128,6 +133,11 @@
         this.finishedListeners.push(listener);
     }
     
+    CovalentActivity.prototype.addActivityEndNavigationListener = function(listener)
+    {
+        this.endNavigationListener = listener;
+    }
+    
     CovalentActivity.prototype.notifyActivityStateChangeListeners = function(activityState)
     {
         for(var i = 0; i < this.stateChangeListeners.length; i++)
@@ -152,6 +162,14 @@
         }
     }
     
+    CovalentActivity.prototype.notifyActivityEndNavigationListener = function(activityState)
+    {
+        if(this.endNavigationListener)
+        {
+            this.endNavigationListener(activityState);
+        }
+    }
+    
     CovalentActivity.prototype.destroy = function() 
     {
         if (this.activityHandle) 
@@ -169,5 +187,6 @@
     window['com_cengage_covalent_widgets_CovalentActivity'] = CovalentActivity;
     CovalentActivity.prototype['addActivityStateChangeListener'] = CovalentActivity.prototype.addActivityStateChangeListener;
     CovalentActivity.prototype['addActivityFinishedListener'] = CovalentActivity.prototype.addActivityFinishedListener;
+    CovalentActivity.prototype['addActivityEndNavigationListener'] = CovalentActivity.prototype.addActivityEndNavigationListener;
     
 })();
