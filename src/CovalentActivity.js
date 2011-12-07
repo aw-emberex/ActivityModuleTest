@@ -47,6 +47,11 @@
                     covalentActivity.notifyActivityEndNavigationListeners(activityState);
                 } );
                 
+                if(settings.autoSaveInterval)
+                {
+                    covalentActivity.activityHandle.setAutoSaveInterval(settings.autoSaveInterval);
+                }                                
+                
                 covalentActivity.activityHandle.render( covalentActivity.getContainerElement() );
             }
         
