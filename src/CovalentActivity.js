@@ -4,7 +4,7 @@
     
         this.stateChangeListeners = [];
         this.finishedListeners = [];
-        this.endNavigationListener = null;
+        this.endNavigationListeners = [];
     
         this.activityHandle = null;
 
@@ -44,7 +44,7 @@
                 }
                 
                 covalentActivity.activityHandle.addActivityEndNavigationListener( function(activityState){
-                    covalentActivity.notifyActivityEndNavigationListener(activityState);
+                    covalentActivity.notifyActivityEndNavigationListeners(activityState);
                 } );
                 
                 covalentActivity.activityHandle.render( covalentActivity.getContainerElement() );
@@ -135,7 +135,7 @@
     
     CovalentActivity.prototype.addActivityEndNavigationListener = function(listener)
     {
-        this.endNavigationListener = listener;
+        this.endNavigationListeners.push(listener);
     }
     
     CovalentActivity.prototype.notifyActivityStateChangeListeners = function(activityState)
@@ -162,11 +162,11 @@
         }
     }
     
-    CovalentActivity.prototype.notifyActivityEndNavigationListener = function(activityState)
+    CovalentActivity.prototype.notifyActivityEndNavigationListeners = function(activityState)
     {
-        if(this.endNavigationListener)
+        for(var i = 0; i < this.endNavigationListeners.length; i++)
         {
-            this.endNavigationListener(activityState);
+            this.endNavigationListeners[i](activityState);
         }
     }
     
