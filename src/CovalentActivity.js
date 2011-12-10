@@ -4,7 +4,8 @@
     
         this.stateChangeListeners = [];
         this.finishedListeners = [];
-    
+        this.endNavigationListeners = [];
+
         this.activityHandle = null;
 
         this.settings = settings;
@@ -41,6 +42,10 @@
                 if (settings.itemRendererOverride && typeof(covalentActivity.activityHandle.setItemRendererOverride) == "function") {
                     covalentActivity.activityHandle.setItemRendererOverride(settings.itemRendererOverride);
                 }
+
+                covalentActivity.activityHandle.addActivityEndNavigationListener( function(activityState){
+                    covalentActivity.notifyActivityEndNavigationListeners(activityState);
+                } );                
                 
                 if(settings.autoSaveInterval)
                 {
@@ -132,6 +137,11 @@
     {
         this.finishedListeners.push(listener);
     }
+
+    CovalentActivity.prototype.addActivityEndNavigationListener = function(listener)
+    {
+        this.endNavigationListeners.push(listener);
+    }    
     
     CovalentActivity.prototype.notifyActivityStateChangeListeners = function(activityState)
     {
@@ -157,6 +167,14 @@
         }
     }
     
+    CovalentActivity.prototype.notifyActivityEndNavigationListeners = function(activityState)
+    {
+        for(var i = 0; i < this.endNavigationListeners.length; i++)
+        {
+            this.endNavigationListeners[i](activityState);
+        }
+    }
+    
     CovalentActivity.prototype.destroy = function() 
     {
         if (this.activityHandle) 
@@ -174,5 +192,6 @@
     window['com_cengage_covalent_widgets_CovalentActivity'] = CovalentActivity;
     CovalentActivity.prototype['addActivityStateChangeListener'] = CovalentActivity.prototype.addActivityStateChangeListener;
     CovalentActivity.prototype['addActivityFinishedListener'] = CovalentActivity.prototype.addActivityFinishedListener;
+    CovalentActivity.prototype['addActivityEndNavigationListener'] = CovalentActivity.prototype.addActivityEndNavigationListener;
     
 })();
