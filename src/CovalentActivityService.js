@@ -62,11 +62,6 @@ CovalentActivityService.prototype.closeActivity = function(onSuccess, uuid, onFa
     this.restService.postRequestString("/close/"+uuid, null, onSuccess, onFailure);
 };
 
-CovalentActivityService.prototype.doneWithStep = function(onSuccess, activityLocator, stepUid, onFailure)
-{
-    this.restService.postRequestJSON("/"+activityLocator+"/step/"+stepUid+"/done", null, onSuccess, onFailure);
-};
-
 CovalentActivityService.prototype.getItemWidgetParams = function(onSuccess, activityLocator, itemUid, options, mode, onFailure)
 {
     var params = {
