@@ -1,197 +1,218 @@
-(function(){
-
-    function CovalentActivity(settings){
+(function() {
+    /** 
+     * The name of the packaged script file that this code gets compiled into.
+     * This string is dynamically replaced during the build process to reflect the generated filename.
+     */
+    var SCRIPT_FILENAME = "@cam.script.filename@";
     
-        this.stateChangeListeners = [];
-        this.finishedListeners = [];
-        this.endNavigationListeners = [];
-    
-        this.activityHandle = null;
+    /**
+     * A list of properties that, if specified in the settings passed to the constructor, will be passed
+     * as launch parameters, and will not be passed to the activity handle constructor when it is
+     * instantiated.
+     */
+    var COVALENT_ACTIVITY_SERVICE_LAUNCH_PARAMS = [
+        "consumerId",
+        "uuid",
+        "specification",
+        "prebuiltId",
+        "activityOptions",
+        "persistent",
+        "serializedGrade",
+        "secureParams"
+    ];
 
-        this.settings = settings;
-        
-        var covalentHost = this.settings.covalentHost;
-        if (covalentHost && typeof(covalentHost) != 'string') {
+    /**
+     * Constructor.
+     * @param {Object} settings The settings used to configure this object.
+     */
+    function CovalentActivity(settings)
+    {
+        var covalentHost = settings.covalentHost;
+        if (! covalentHost) {
+            covalentHost = CovalentUtils.resolveCovalentHost(SCRIPT_FILENAME);
+            if (! covalentHost) {
+                throw new Error("Unable to resolve covalent host from script element with src containing filename ("+SCRIPT_FILENAME+").");
+            }
+        } else if (typeof(covalentHost) != 'string') {
             throw new Error("Unrecognized value for 'covalentHost' setting.  Value must be a string.");
         }
-        this.activityService = new CovalentActivityService(covalentHost);
         
-        var errorHandler = this.settings.error;
-        if (errorHandler) {
-            if (typeof(errorHandler) != "function") {
+        this.errorHandler = settings.error;
+        if (this.errorHandler) {
+            if (typeof(this.errorHandler) != "function") {
                 throw new Error("Unrecognized value for 'error' setting.  Value must be a function.");
             }
+            delete setttings.error;
         }
         
-        var launchParams = null;
+        this.settings = settings;
         
-        var handleLaunchResult = (function(covalentActivity){
-            
-            return function(launchInfo){
-                covalentActivity.activityHandle = eval(launchInfo['activityScript']);
-             
-                covalentActivity.activityHandle.setActivityService( covalentActivity.activityService );
-                
-                covalentActivity.activityHandle.addActivityStateChangeListener( function(activityState){
-                    covalentActivity.notifyActivityStateChangeListeners(activityState);
-                } );
-                
-                covalentActivity.activityHandle.addActivityFinishedListener( function(uuid){
-                    covalentActivity.notifyActivityFinishedListeners(uuid);
-                } );
-                if (settings.itemRendererOverride && typeof(covalentActivity.activityHandle.setItemRendererOverride) == "function") {
-                    covalentActivity.activityHandle.setItemRendererOverride(settings.itemRendererOverride);
-                }
-                
-                covalentActivity.activityHandle.addActivityEndNavigationListener( function(activityState){
-                    covalentActivity.notifyActivityEndNavigationListeners(activityState);
-                } );
-                
-                if(settings.autoSaveInterval)
-                {
-                    covalentActivity.activityHandle.setAutoSaveInterval(settings.autoSaveInterval);
-                }                                
-                
-                covalentActivity.activityHandle.render( covalentActivity.getContainerElement() );
+        this.activityService = new CovalentActivityService(covalentHost);
+        this.stateChangeListeners = [];
+        this.endNavigationListeners = [];
+        this.finishedListeners = [];
+        this.activityHandle = null;
+        
+        var activityLaunchParams = {};
+        jQuery.each(COVALENT_ACTIVITY_SERVICE_LAUNCH_PARAMS, function(idx, prop) {
+            activityLaunchParams[prop] = settings[prop];
+        });
+        
+        this._launch(activityLaunchParams);
+    };
+    
+    jQuery.extend(CovalentActivity.prototype, {
+    
+        isSecure: function()
+        {
+            return typeof(this.settings.secureParams) == 'string' && this.settings.secureParams;
+        },
+        
+        // TODO: Should this continue to be exposed as a public method?  If not, does it even need to exist at all?
+        setActivityHandle: function(handle)
+        {
+            if (!handle) {
+                throw "activity handle cannot be null.";
             }
+            this.activityHandle = handle;
+        },
         
-        })(this);
+        getActivityService: function()
+        {
+            return this.activityService;
+        },
         
-        if (this.isSecure())
+        getContainerElement: function()
         {
-            //construct launch parameters
-            launchParams = {
-                secureParams: this.settings.secureParams
-            };
-            
-            this.activityService.launchSecureActivity(handleLaunchResult, launchParams, errorHandler);
-        }
-        else if (this.settings.reviewMode)
-        {
-        	//construct launch parameters
-            launchParams = {
-                consumerId: this.settings.consumerId,
-                uuid: this.settings.uuid,
-                specification: this.settings.specification,
-                prebuildId: this.settings.prebuiltId,
-                activityOptions: this.settings.activityOptions,
-                persistent: this.settings.persistent
-            };
-            
-            this.activityService.launchReviewActivity(handleLaunchResult, launchParams, errorHandler);
-        }
-        else
-        {
-            //construct launch parameters
-            launchParams = {
-                consumerId: this.settings.consumerId,
-                uuid: this.settings.uuid,
-                specification: this.settings.specification,
-                prebuildId: this.settings.prebuiltId,
-                activityOptions: this.settings.activityOptions,
-                persistent: this.settings.persistent,
-                serializedGrade: this.settings.serializedGrade
-            };
-            
-            this.activityService.launchActivity(handleLaunchResult, launchParams, errorHandler);
-        }
-    }
-    
-    CovalentActivity.prototype.isSecure = function()
-    {
-        return typeof(this.settings.secureParams) == 'string' && this.settings.secureParams;
-    }
-    
-    CovalentActivity.prototype.setActivityHandle = function(handle)
-    {
-        if (!handle)
-        {
-            throw "activity handle cannot be null.";
-        }
-        this.activityHandle = handle;
-    }
-    
-    CovalentActivity.prototype.getActivityService = function()
-    {
-        return this.activityService;
-    }
-    
-    CovalentActivity.prototype.getContainerElement = function()
-    {
-        var id = this.settings['containerElementId'];
-        return (id ? document.getElementById(id) : null);
-    }
-    
-    //TODO: this style of registering listeners came from ALS widget's style
-    //which was a necessity of being a widget in an iframe.  i think it might
-    //be better to methods like CovalentActivity.getActivityState( callback( activityState) )
-    CovalentActivity.prototype.addActivityStateChangeListener = function(listener)
-    {
-        this.stateChangeListeners.push(listener);
-    }
-    
-    //TODO: this came from ALS widget.  Do we even need it?  are activities
-    //going to be ending themselves and notifying consumers?  or will the consumer
-    //be telling the activity that it's done?  need to reexamine.
-    CovalentActivity.prototype.addActivityFinishedListener = function(listener)
-    {
-        this.finishedListeners.push(listener);
-    }
-    
-    CovalentActivity.prototype.addActivityEndNavigationListener = function(listener)
-    {
-        this.endNavigationListeners.push(listener);
-    }
-    
-    CovalentActivity.prototype.notifyActivityStateChangeListeners = function(activityState)
-    {
-        for(var i = 0; i < this.stateChangeListeners.length; i++)
-        {
-            this.stateChangeListeners[i](activityState);
-        }
-    }
-    
-    CovalentActivity.prototype.notifyActivityFinishedListeners = function(activityState)
-    {
-        for(var i = 0; i < this.finishedListeners.length; i++)
-        {
-            this.finishedListeners[i](activityState);
-        }
-    }
-    
-    CovalentActivity.prototype.save = function(afterSaveCallback)
-    {
-        if (this.activityHandle) 
-        {
-            this.activityHandle.save(afterSaveCallback);
-        }
-    }
-    
-    CovalentActivity.prototype.notifyActivityEndNavigationListeners = function(activityState)
-    {
-        for(var i = 0; i < this.endNavigationListeners.length; i++)
-        {
-            this.endNavigationListeners[i](activityState);
-        }
-    }
-    
-    CovalentActivity.prototype.destroy = function() 
-    {
-        if (this.activityHandle) 
-        {
-            this.activityHandle.destroy();
-        }
+            var id = this.settings.containerElementId;
+            return (id ? document.getElementById(id) : null);
+        },
         
-        var containerElement = this.getContainerElement();
-        if (containerElement) 
+        addActivityStateChangeListener: function(listener)
         {
-            containerElement.innerHTML = '';
+            this.stateChangeListeners.push(listener);
+        },
+        
+        addActivityEndNavigationListener: function(listener)
+        {
+            this.endNavigationListeners.push(listener);
+        },
+        
+        addActivityFinishedListener: function(listener)
+        {
+            this.finishedListeners.push(listener);
+        },
+        
+        _launch: function(launchParams) 
+        {
+            var onLaunch = jQuery.proxy(this._onActivityLaunch, this);
+            var onError = jQuery.proxy(this._onError, this);
+            
+            if (this.isSecure()) {
+                this.activityService.launchSecureActivity(onLaunch, launchParams, onError);
+            } else if (this.settings.reviewMode) {
+                this.activityService.launchReviewActivity(onLaunch, launchParams, onError);
+            } else {
+                this.activityService.launchActivity(onLaunch, launchParams, onError);
+            }
+        },
+        
+        _onActivityLaunch: function(launchInfo)
+        {
+            this.activityLaunchInfo = launchInfo;
+            
+            if (! launchInfo.className) {
+                throw new Error("No value defined for activity handle classname");
+            }
+            
+            if (typeof(window[launchInfo.className]) == "undefined") {
+                if (! launchInfo.url) {
+                    throw new Error("No value defined for activity handle URL");
+                }
+                jQuery.getScript(launchInfo.url, jQuery.proxy(this._onActivityHandleClassLoaded, this));
+            } else {
+                this._onActivityHandleClassLoaded();
+            }
+        },
+        
+        _onActivityHandleClassLoaded: function()
+        {
+            var activityHandleClassName = this.activityLaunchInfo.className;
+            if (typeof(window[activityHandleClassName]) == "undefined") {
+                throw new Error("Class not found for activity handle class name '"+activityHandleClassName+"'");
+            }
+            this._createAndRenderActivity(activityHandleClassName);
+        },
+        
+        _createAndRenderActivity: function(activityHandleClassName)
+        {
+            var activityCreateParams = jQuery.extend(
+                {},
+                this.settings,
+                (this.activityLaunchInfo.settings || {}), 
+                { activityService: this.activityService }
+            );
+            
+            this.activityHandle = new window[activityHandleClassName](activityCreateParams);
+            this.activityHandle.addActivityStateChangeListener(jQuery.proxy(this._onActivityStateChange, this));
+            this.activityHandle.addActivityEndNavigationListener(jQuery.proxy(this._onActivityEndNavigation, this));
+            this.activityHandle.addActivityFinishedListener(jQuery.proxy(this._onActivityFinished, this));
+            this.activityHandle.render(this.getContainerElement());
+        },
+            
+        _onActivityStateChange: function(message)
+        {
+            this._notifyListeners(this.stateChangeListeners, message);
+        },
+        
+        _onActivityEndNavigation: function(message)
+        {
+            this._notifyListeners(this.endNavigationListeners, message);
+        },
+        
+        _onActivityFinished: function(message)
+        {
+            // TODO: Pass the entire activity state object, not just the UUID.
+            if (message && typeof(message) == "object") {
+                message = (message.secure ? message.secureMessage : message.uuid);
+            }
+            this._notifyListeners(this.finishedListeners, message);
+        },
+        
+        _notifyListeners: function(listeners, message) 
+        {
+            for (var i = 0; i < listeners.length; i++) {
+                listeners[i](message);
+            }
+        },
+            
+        save: function(afterSaveCallback) 
+        {
+            if (this.activityHandle) 
+            {
+                this.activityHandle.save(afterSaveCallback);
+            }
+        },
+        
+        destroy: function() 
+        {
+            if (this.activityHandle) {
+                this.activityHandle.destroy();
+            }
+            
+            var containerElement = this.getContainerElement();
+            if (containerElement) {
+                containerElement.innerHTML = '';
+            }
+        },
+        
+        _onError: function(message) {
+            if (this.errorHandler) {
+                this.errorHandler(message);
+            }
         }
-    }
+    });
     
     window['com_cengage_covalent_widgets_CovalentActivity'] = CovalentActivity;
-    CovalentActivity.prototype['addActivityStateChangeListener'] = CovalentActivity.prototype.addActivityStateChangeListener;
-    CovalentActivity.prototype['addActivityFinishedListener'] = CovalentActivity.prototype.addActivityFinishedListener;
-    CovalentActivity.prototype['addActivityEndNavigationListener'] = CovalentActivity.prototype.addActivityEndNavigationListener;
     
 })();
