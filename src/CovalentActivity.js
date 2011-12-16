@@ -42,7 +42,7 @@
             if (typeof(this.errorHandler) != "function") {
                 throw new Error("Unrecognized value for 'error' setting.  Value must be a function.");
             }
-            delete setttings.error;
+            delete settings.error;
         }
         
         this.settings = settings;
