@@ -19,15 +19,11 @@
 	<!-- Project directories -->
     <property name="source.dir" value="src"/>
     <property name="lib.dir" value="lib"/>  
-    <property name="resources.dir" value="resources"/>
 	<property name="tools.dir" value="tools"/>
-	
-	<!-- Project files -->
-	<property name="build.config.script.filepath" value="${resources.dir}/build/config_deploy.js"/>
 	
 	<!-- Generated Directories -->
     <property name="build.dir" value="build"/>
-	<property name="deps.dir" value="${build.dir}/dependencies"/>
+	<property name="dependencies.dir" value="${build.dir}/dependencies"/>
 	<property name="compile.dir" value="${build.dir}/compile"/>
     <property name="deploy.dir" value="${build.dir}/deploy"/>
 	<property name="publish.dir" value="${build.dir}/publish"/>
@@ -42,13 +38,13 @@
     <!-- Filesets, Patternsets, Paths                                       -->
     <!-- ================================================================== -->
     
-    <fileset id="dependencies.fileset" dir="${deps.dir}">
+    <fileset id="dependencies.fileset" dir="${dependencies.dir}">
         <include name="cxd/cxd.js" />
         <include name="cim/cim.js" />
         <include name="json2.js" />
     </fileset>
     
-    <fileset id="dependencies.nolibs.fileset" dir="${deps.dir}">
+    <fileset id="dependencies.nolibs.fileset" dir="${dependencies.dir}">
         <include name="cxd/cxd_nolibs.js" />
         <include name="cim/cim_nolibs.js" />
     </fileset>
@@ -57,7 +53,7 @@
     <!-- Includes/Requirements                                              -->
     <!-- ================================================================== -->
     
-    <import file="sharedBuild/moduleHelper.xml"/>
+    <import file="${tools.dir}/sharedBuild/moduleHelper.xml"/>
     <taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask" classpath="${tools.dir}/compiler.jar"/>
     
     <!-- ============================================================== -->
@@ -65,20 +61,13 @@
     <!-- ============================================================== -->
 	
 	<target name="get-dependencies" description="--> Fetch all the dependencies needed for building the project">
-        <delete dir="${deps.dir}"/>
-        <mkdir dir="${deps.dir}"/>
-        
         <!-- Use the "build" configuration when resolving if not specified before now -->
 		<antcall target="moduleHelper-retrieve-dependencies">
-            <param name="module.retrieved.dependencies.dir" value="${deps.dir}"/>
+            <param name="module.retrieved.dependencies.dir" value="${dependencies.dir}"/>
             <param name="ivy.configuration" value="build"/>
         </antcall>
         
-		<unzip dest="${deps.dir}">
-            <fileset dir="${deps.dir}" includes="**/*.zip" />
-        </unzip>
-        
-        <copy todir="${deps.dir}">
+        <copy todir="${dependencies.dir}">
             <fileset dir="${lib.dir}" includes="**/*" />
         </copy>
     </target>
@@ -116,35 +105,16 @@
 	<target name="build"
             description="--> Build the project and prepare files for deployment"
             depends="compile">
-	
+
 		<delete dir="${deploy.dir}"/>
 		<mkdir dir="${deploy.dir}"/>
-        
-        <!-- Prepend files with header; this has to be done after compile step for minified files
-             since compilation will remove all comments. -->
-        <antcall target="-build-deployable-file"><param name="filename" value="${build.js.filename}"/></antcall>
-        <antcall target="-build-deployable-file"><param name="filename" value="${build.min.js.filename}"/></antcall>
-        <antcall target="-build-deployable-file"><param name="filename" value="${build.nolibs.js.filename}"/></antcall>
-        <antcall target="-build-deployable-file"><param name="filename" value="${build.nolibs.min.js.filename}"/></antcall>
-		
-        <copy file="module.properties" 
-              todir="${deploy.dir}" 
-              overwrite="true"/>
-    </target>
-    
-    <target name="-build-deployable-file">
-        <fail unless="filename">You must specify a "filename" property.</fail>
-        <concat destfile="${deploy.dir}/${filename}" overwrite="true">
-            <header file="${build.config.script.filepath}" />
-            <fileset dir="${compile.dir}" includes="${filename}"/>
-            <filterchain>
-                <replacetokens>
-                    <token key="module.version" value="${module.version}"/>
-                    <token key="module.id" value="${module.id}"/>
-                    <token key="cam.script.filename" value="${filename}"/>
-                </replacetokens>
-            </filterchain>
-        </concat>
+
+        <copy file="module.properties" todir="${deploy.dir}" overwrite="true"/>
+        <antcall target="moduleHelper-build-deployable-file"><param name="compiled.filename" value="${build.js.filename}"/></antcall>
+        <antcall target="moduleHelper-build-deployable-file"><param name="compiled.filename" value="${build.min.js.filename}"/></antcall>
+        <antcall target="moduleHelper-build-deployable-file"><param name="compiled.filename" value="${build.nolibs.js.filename}"/></antcall>
+        <antcall target="moduleHelper-build-deployable-file"><param name="compiled.filename" value="${build.nolibs.min.js.filename}"/></antcall>
+
     </target>
     
     <target name="deploy-local"
@@ -162,6 +132,10 @@
     <target name="clean"
             description="--> Clean the project">
         <delete dir="${build.dir}"/>
+        <delete dir="${dependencies.dir}"/>
+        <delete dir="${compile.dir}"/>
+        <delete dir="${deploy.dir}"/>
+        <delete dir="${publish.dir}"/>
     </target>
 
 </project>

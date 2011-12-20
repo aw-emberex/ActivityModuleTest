@@ -3,7 +3,7 @@
      * The name of the packaged script file that this code gets compiled into.
      * This string is dynamically replaced during the build process to reflect the generated filename.
      */
-    var SCRIPT_FILENAME = "@cam.script.filename@";
+    var SCRIPT_FILENAME = "@module.script.filename@";
     
     /**
      * A list of properties that, if specified in the settings passed to the constructor, will be passed
