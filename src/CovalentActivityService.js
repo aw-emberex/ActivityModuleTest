@@ -5,9 +5,24 @@
     /**
      * @constructor
      */
-    function CovalentActivityService(covalentHost, useSecureProtocol)
+    function CovalentActivityService(covalentHost, useSecureProtocol, serviceBasePath)
     {
-        this.restService = new CovalentXDClient(covalentHost, COVALENT_ACTIVITY_SERVICE_PATH);
+
+        if (! covalentHost) {
+        
+            // The filename string "@cam.script.filename@" is dynamically replaced during the build process
+            // to reflect the cam generated filename needed when resolving the Covalent Host. 
+            covalentHost = CovalentUtils.resolveCovalentHost("@cam.script.filename@");
+            
+            if (! covalentHost) {
+                throw new Error("Unable to resolve covalent host.");
+            }
+        }
+        
+        if( typeof(serviceBasePath) == 'undefined' )
+            serviceBasePath = COVALENT_ACTIVITY_SERVICE_PATH;
+        
+        this.restService = new CovalentXDClient(covalentHost, serviceBasePath);
     };
     
     jQuery.extend(CovalentActivityService.prototype, {
