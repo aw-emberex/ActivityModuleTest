@@ -68,15 +68,6 @@
             return typeof(this.settings.secureParams) == 'string' && this.settings.secureParams;
         },
         
-        // TODO: Should this continue to be exposed as a public method?  If not, does it even need to exist at all?
-        setActivityHandle: function(handle)
-        {
-            if (!handle) {
-                throw "activity handle cannot be null.";
-            }
-            this.activityHandle = handle;
-        },
-        
         getActivityService: function()
         {
             return this.activityService;
@@ -192,6 +183,15 @@
             {
                 this.activityHandle.save(afterSaveCallback);
             }
+        },
+        
+        isModified: function() 
+        {
+            if (this.activityHandle) 
+            {
+                return this.activityHandle.isModified();
+            }
+            return false;
         },
         
         destroy: function() 
