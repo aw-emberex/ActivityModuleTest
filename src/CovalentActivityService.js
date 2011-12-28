@@ -68,11 +68,6 @@
             this.restService.postRequestJSON("/submit/"+uuid, null, onSuccess, onFailure);
         },
         
-        closeActivity: function(onSuccess, uuid, onFailure)
-        {
-            this.restService.postRequestString("/close/"+uuid, null, onSuccess, onFailure);
-        },
-        
         getItemWidgetParams: function(onSuccess, activityLocator, itemUid, options, mode, onFailure)
         {
             var params = {
