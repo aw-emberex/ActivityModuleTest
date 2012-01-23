@@ -5,7 +5,7 @@
     /**
      * @constructor
      */
-    function CovalentActivityService(covalentHost, useSecureProtocol, serviceBasePath)
+    function CovalentActivityService(covalentHost, useSecureProtocol, serviceBasePath, covalentHostTimeout)
     {
 
         if (! covalentHost) {
@@ -19,10 +19,10 @@
             }
         }
         
-        if( typeof(serviceBasePath) == 'undefined' )
+        if( typeof(serviceBasePath) == 'undefined' || serviceBasePath == null)
             serviceBasePath = COVALENT_ACTIVITY_SERVICE_PATH;
         
-        this.restService = new CovalentXDClient(covalentHost, serviceBasePath);
+        this.restService = new CovalentXDClient(covalentHost, serviceBasePath, useSecureProtocol, covalentHostTimeout);
     };
     
     jQuery.extend(CovalentActivityService.prototype, {

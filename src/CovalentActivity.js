@@ -45,9 +45,11 @@
             delete settings.error;
         }
         
+        var useSecureProtocol = typeof(settings.useSecureProtocol) == "undefined" ? false : settings.useSecureProtocol;
+        
         this.settings = settings;
         
-        this.activityService = new CovalentActivityService(covalentHost);
+        this.activityService = new CovalentActivityService(covalentHost, useSecureProtocol, null, this.settings.covalentHostTimeout);
         this.stateChangeListeners = [];
         this.endNavigationListeners = [];
         this.finishedListeners = [];
