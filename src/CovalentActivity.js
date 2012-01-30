@@ -159,11 +159,11 @@
         }
     }
     
-    CovalentActivity.prototype.save = function()
+    CovalentActivity.prototype.save = function(afterSaveCallback)
     {
         if (this.activityHandle) 
         {
-            this.activityHandle.save();
+            this.activityHandle.save(afterSaveCallback);
         }
     }
     
