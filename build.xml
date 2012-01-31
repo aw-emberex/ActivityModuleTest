@@ -14,20 +14,20 @@
 	<!-- Misc. -->
     <property name="module.id" value="${ant.project.name}"/>
     <property name="build.file.basename" value="${module.id}"/>
+    <property name="jscomp.compilationLevel" value="simple"/>
 
 	<!-- Project directories -->
     <property name="source.dir" value="src"/>
-    <property name="include.dir" value="include"/>
-	<property name="library.dir" value="lib"/>
-    <property name="extern.dir" value="extern"/>  
+    <property name="lib.dir" value="lib"/>  
+    <property name="resources.dir" value="resources"/>
+	<property name="tools.dir" value="tools"/>
 	
 	<!-- Project files -->
-	<property name="build.config.script.filepath" value="${include.dir}/build/config_deploy.js"/>
+	<property name="build.config.script.filepath" value="${resources.dir}/build/config_deploy.js"/>
 	
 	<!-- Generated Directories -->
     <property name="build.dir" value="build"/>
-	<property name="lib.dir" value="${build.dir}/lib"/>
-    <property name="concat.dir" value="${build.dir}/concat"/>
+	<property name="deps.dir" value="${build.dir}/dependencies"/>
 	<property name="compile.dir" value="${build.dir}/compile"/>
     <property name="deploy.dir" value="${build.dir}/deploy"/>
 	<property name="publish.dir" value="${build.dir}/publish"/>
@@ -38,176 +38,118 @@
     <property name="build.nolibs.js.filename" value="${build.file.basename}_nolibs.js"/>
     <property name="build.nolibs.min.js.filename" value="${build.file.basename}_nolibs_min.js"/>
     
+    <!-- ================================================================== -->
+    <!-- Filesets, Patternsets, Paths                                       -->
+    <!-- ================================================================== -->
+    
+    <fileset id="dependencies.fileset" dir="${deps.dir}">
+        <include name="cxd/cxd.js" />
+        <include name="cim/cim.js" />
+        <include name="json2.js" />
+    </fileset>
+    
+    <fileset id="dependencies.nolibs.fileset" dir="${deps.dir}">
+        <include name="cxd/cxd_nolibs.js" />
+        <include name="cim/cim_nolibs.js" />
+    </fileset>
+    
 	<!-- ================================================================== -->
     <!-- Includes/Requirements                                              -->
     <!-- ================================================================== -->
     
     <import file="sharedBuild/moduleHelper.xml"/>
-    <taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask" classpath="${library.dir}/compiler.jar"/>
+    <taskdef name="jscomp" classname="com.google.javascript.jscomp.ant.CompileTask" classpath="${tools.dir}/compiler.jar"/>
     
     <!-- ============================================================== -->
     <!-- Targets                                                        -->
     <!-- ============================================================== -->
 	
-	<target name="init" description="--> Initialize">
+	<target name="get-dependencies" description="--> Fetch all the dependencies needed for building the project">
+        <delete dir="${deps.dir}"/>
+        <mkdir dir="${deps.dir}"/>
+        
         <!-- Use the "build" configuration when resolving if not specified before now -->
 		<antcall target="moduleHelper-retrieve-dependencies">
-            <param name="module.retrieved.dependencies.dir" value="${lib.dir}"/>
+            <param name="module.retrieved.dependencies.dir" value="${deps.dir}"/>
             <param name="ivy.configuration" value="build"/>
         </antcall>
-		<unzip dest="${lib.dir}">
-            <fileset dir="${lib.dir}" includes="**/*.zip" />
-        </unzip>
-    </target>
-	
-	<target name="concat"
-	    description="--> Merge all necessary files together into a single file." 
-		depends="init">
-		
-		<delete dir="${concat.dir}" />
-        <mkdir dir="${concat.dir}" />
-
-		<!-- CAM without dependencies -->
-        <concat destfile="${concat.dir}/${build.nolibs.js.filename}" overwrite="true">
-            <filelist dir="${source.dir}">
-                <file name="CovalentUtils.js" />
-        		<file name="CovalentActivity.js" /> 
-                <file name="CovalentActivityService.js" />
-            </filelist>
-            <filelist dir="${lib.dir}/cxd">
-                <file name="cxd_nolibs.js" />
-            </filelist>
-            <filelist dir="${lib.dir}/cim">
-                <file name="cim_nolibs.js" />
-            </filelist>
-        </concat>
         
-        <!-- CAM with dependencies -->
-		<concat destfile="${concat.dir}/${build.js.filename}" overwrite="true">
-			<filelist dir="${source.dir}">
-                <file name="CovalentUtils.js" />
-                <file name="CovalentActivity.js" /> 
-                <file name="CovalentActivityService.js" />
-            </filelist>
-            <filelist dir="${lib.dir}/cxd">
-                <file name="cxd.js" />
-            </filelist>
-            <filelist dir="${lib.dir}/cim">
-                <file name="cim.js" />
-            </filelist>
-        </concat>
+		<unzip dest="${deps.dir}">
+            <fileset dir="${deps.dir}" includes="**/*.zip" />
+        </unzip>
+        
+        <copy todir="${deps.dir}">
+            <fileset dir="${lib.dir}" includes="**/*" />
+        </copy>
     </target>
 	
     <target name="compile" 
-    	   description="--> Compile the project" 
-    	   depends="concat">
-    	
-    	<delete dir="${compile.dir}"/>
+            description="--> Compile the project" 
+            depends="get-dependencies">
+        
+        <delete dir="${compile.dir}"/>
         <mkdir dir="${compile.dir}"/>
-    	
-        <!-- CAM with dependencies -->
-        <jscomp output="${compile.dir}/${build.min.js.filename}" compilationLevel="simple" warning="quiet" debug="false">
-           <externs dir="${extern.dir}">
-                <file name="webkit_console.js" />
-                <file name="jquery-1.4.3.externs.js" />
-                <file name="activityhandle.js" />
-            </externs>
-            <sources dir="${concat.dir}">
-                <file name="${build.js.filename}" />
-            </sources>
+        
+        <!-- Non-minified with dependencies -->
+        <concat destfile="${compile.dir}/${build.js.filename}" overwrite="true">
+            <fileset dir="${source.dir}" includes="**/*.js"/>
+            <fileset refid="dependencies.fileset"/>
+        </concat>
+        
+        <!-- Non-minified without dependencies -->
+        <concat destfile="${compile.dir}/${build.nolibs.js.filename}" overwrite="true">
+            <fileset dir="${source.dir}" includes="**/*.js"/>
+            <fileset refid="dependencies.nolibs.fileset"/>
+        </concat>
+        
+        <!-- Minified with dependencies -->
+        <jscomp output="${compile.dir}/${build.min.js.filename}" compilationLevel="${jscomp.compilationLevel}" warning="quiet" debug="false">
+            <sources dir="${compile.dir}" files="${build.js.filename}" />
         </jscomp>
-    	
-        <!-- CAM without dependencies -->
-    	<jscomp output="${compile.dir}/${build.nolibs.min.js.filename}" compilationLevel="simple" warning="quiet" debug="false">
-           <externs dir="${extern.dir}">
-                <file name="webkit_console.js" />
-                <file name="jquery-1.4.3.externs.js" />
-                <file name="activityhandle.js" />
-            </externs>
-            <sources dir="${concat.dir}">
-            	<file name="${build.nolibs.js.filename}" />
-            </sources>
-    	</jscomp>
+
+        <!-- Minified without dependencies -->
+        <jscomp output="${compile.dir}/${build.nolibs.min.js.filename}" compilationLevel="${jscomp.compilationLevel}" warning="quiet" debug="false">
+            <sources dir="${compile.dir}" files="${build.nolibs.js.filename}" />
+        </jscomp>
     </target>
-	
+    
 	<target name="build"
-	    description="--> Build the project and prepare it for deployment"
-		depends="compile">
+            description="--> Build the project and prepare files for deployment"
+            depends="compile">
 	
 		<delete dir="${deploy.dir}"/>
 		<mkdir dir="${deploy.dir}"/>
         
         <!-- Prepend files with header; this has to be done after compile step for minified files
              since compilation will remove all comments. -->
-        
-        <!-- CAM with dependencies -->		
-		<concat destfile="${deploy.dir}/${build.min.js.filename}" overwrite="true">
-            <header file="${build.config.script.filepath}"/>
-			<filelist dir="${compile.dir}">
-                <file name="${build.min.js.filename}"/>
-            </filelist>
-            <filterchain>
-                <replacetokens>
-                	<token key="module.version" value="${module.version}"/>
-                	<token key="module.id" value="${module.id}"/>
-                	<token key="cam.script.filename" value="${build.min.js.filename}"/>
-                </replacetokens>
-            </filterchain>
-        </concat>
-        
-        <!-- CAM without dependendies -->
-        <concat destfile="${deploy.dir}/${build.nolibs.min.js.filename}" overwrite="true">
-            <header file="${build.config.script.filepath}"/>
-            <filelist dir="${compile.dir}">
-                <file name="${build.nolibs.min.js.filename}"/>
-            </filelist>
-            <filterchain>
-                <replacetokens>
-                    <token key="module.version" value="${module.version}"/>
-                    <token key="module.id" value="${module.id}"/>
-                	<token key="cam.script.filename" value="${build.nolibs.min.js.filename}"/>
-                </replacetokens>
-            </filterchain>
-        </concat>
+        <antcall target="-build-deployable-file"><param name="filename" value="${build.js.filename}"/></antcall>
+        <antcall target="-build-deployable-file"><param name="filename" value="${build.min.js.filename}"/></antcall>
+        <antcall target="-build-deployable-file"><param name="filename" value="${build.nolibs.js.filename}"/></antcall>
+        <antcall target="-build-deployable-file"><param name="filename" value="${build.nolibs.min.js.filename}"/></antcall>
 		
-		<!-- CAM with dependencies non-minified -->
-		<concat destfile="${deploy.dir}/${build.js.filename}" overwrite="true">
-            <header file="${build.config.script.filepath}" />
-			<filelist dir="${concat.dir}">
-			    <file name="${build.js.filename}"/>
-			</filelist>
-            <filterchain>
-                <replacetokens>
-                    <token key="module.version" value="${module.version}"/>
-                    <token key="module.id" value="${module.id}"/>
-                	<token key="cam.script.filename" value="${build.js.filename}"/>
-                </replacetokens>
-            </filterchain>
-        </concat>
-		
-		<!-- CAM without dependencies non-minified -->
-        <concat destfile="${deploy.dir}/${build.nolibs.js.filename}" overwrite="true">
-            <header file="${build.config.script.filepath}" />
-            <filelist dir="${concat.dir}">
-                <file name="${build.nolibs.js.filename}"/>
-            </filelist>
-            <filterchain>
-                <replacetokens>
-                    <token key="module.version" value="${module.version}"/>
-                    <token key="module.id" value="${module.id}"/>
-                	<token key="cam.script.filename" value="${build.nolibs.js.filename}"/>
-                </replacetokens>
-            </filterchain>
-        </concat>
-        
         <copy file="module.properties" 
               todir="${deploy.dir}" 
               overwrite="true"/>
-	</target>
-	
+    </target>
+    
+    <target name="-build-deployable-file">
+        <fail unless="filename">You must specify a "filename" property.</fail>
+        <concat destfile="${deploy.dir}/${filename}" overwrite="true">
+            <header file="${build.config.script.filepath}" />
+            <fileset dir="${compile.dir}" includes="${filename}"/>
+            <filterchain>
+                <replacetokens>
+                    <token key="module.version" value="${module.version}"/>
+                    <token key="module.id" value="${module.id}"/>
+                    <token key="cam.script.filename" value="${filename}"/>
+                </replacetokens>
+            </filterchain>
+        </concat>
+    </target>
+    
     <target name="deploy-local"
-	    description="--> Deploy the module to a Covalent server"
-	    depends="build">
+            description="--> Deploy the module to a Covalent server"
+            depends="build">
 		<antcall target="moduleHelper-deploy-local"/>
 	</target>
 	
