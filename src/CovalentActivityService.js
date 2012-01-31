@@ -40,7 +40,7 @@
         
         getActivityStatus: function(onSuccess, uuid, onFailure)
         {
-            this.restService.postRequestJSON("/status/"+uuid, onSuccess, onFailure);
+            this.restService.postRequestJSON("/status/" + uuid, null, onSuccess, onFailure);
         },
         
         getActivityState: function(onSuccess, uuid, onFailure)
