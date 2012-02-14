@@ -7,6 +7,7 @@
     <configurations>
         <conf name="default" />
         <conf name="build" description="specifies dependencies required for building the module" />
+        <conf name="latest" description="use the latest version" />
     </configurations>
     
     <publications>
@@ -15,10 +16,10 @@
 
     <dependencies>
         <dependency org="com.cengage.covalent.modules" name="cim" rev="${cim.version}" conf="build->default" />
-        <dependency org="com.cengage.covalent.modules" name="cim" rev="latest.integration" conf="default->default" />
+        <dependency org="com.cengage.covalent.modules" name="cim" rev="latest.integration" conf="latest->latest" />
         
         <dependency org="com.cengage.covalent.modules" name="cxd" rev="${cxd.version}" conf="build->default" />
-        <dependency org="com.cengage.covalent.modules" name="cxd" rev="latest.integration" conf="default->default" />
+        <dependency org="com.cengage.covalent.modules" name="cxd" rev="latest.integration" conf="latest->latest" />
     </dependencies>
 
 </ivy-module>
