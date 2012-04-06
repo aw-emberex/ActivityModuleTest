@@ -143,7 +143,10 @@
                 {},
                 this.settings,
                 (this.activityLaunchInfo.settings || {}), 
-                { activityService: this.activityService }
+                {
+                    activityService: this.activityService,
+                    error: jQuery.proxy(this._onError, this)
+                }
             );
             
             this.activityHandle = new window[activityHandleClassName](activityCreateParams);
