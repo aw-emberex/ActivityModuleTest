@@ -151,7 +151,9 @@
             
             this.activityHandle = new window[activityHandleClassName](activityCreateParams);
             this.activityHandle.addActivityStateChangeListener(jQuery.proxy(this._onActivityStateChange, this));
-            this.activityHandle.addActivityEndNavigationListener(jQuery.proxy(this._onActivityEndNavigation, this));
+            if(this.endNavigationListeners && this.endNavigationListeners.length > 0) {
+                this.activityHandle.addActivityEndNavigationListener(jQuery.proxy(this._onActivityEndNavigation, this));
+            }            
             this.activityHandle.addActivityFinishedListener(jQuery.proxy(this._onActivityFinished, this));
             this.activityHandle.render(this.getContainerElement());
         },
