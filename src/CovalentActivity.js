@@ -200,6 +200,15 @@
             }
             return false;
         },
+
+        hasModifiedItem: function() 
+        {
+            if (this.activityHandle)
+            {
+                return this.activityHandle.hasModifiedItem();
+            }
+            return false;
+        },
         
         destroy: function() 
         {
