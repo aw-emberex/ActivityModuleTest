@@ -43,13 +43,11 @@
     <!-- ================================================================== -->
     
     <fileset id="dependencies.fileset" dir="${deps.dir}">
-        <include name="cxd/cxd.js" />
         <include name="cim/cim.js" />
         <include name="json2.js" />
     </fileset>
     
     <fileset id="dependencies.nolibs.fileset" dir="${deps.dir}">
-        <include name="cxd/cxd_nolibs.js" />
         <include name="cim/cim_nolibs.js" />
     </fileset>
     
