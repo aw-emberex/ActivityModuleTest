@@ -26,11 +26,11 @@ Building the Project and Deploying Locally
 -------------------------------------------------------------------------------
 
 Use the following Ant command to rebuild the project and deploy the project
-to your local Covalent project:
+to your local CengageNOW project:
     ant deploy-local
 
 Use the following Ant command to rebuild a non-minified version of the project
-and deploy it to your local Covalent project:
+and deploy it to your local CengageNOW project:
     ant deploy-local-concat
     
 NOTE: If you use the non-minified version you will need to configure the testpage 
@@ -42,31 +42,19 @@ Testing Changes in a Browser
 -------------------------------------------------------------------------------
 
 As you develop and make changes within the project you will want to test them
-in the browser using different rendering options, covalent hosts, etc.
-To do that, you will need to checkout the widgets/widgetConsumer book, and
-configure the testpage in that project to point to your CAM project.
+in the browser using different consumer IDs, Covalent hosts, etc.
+To do that, you will need to follow these steps:
 
-You will need to deploy locally each time you make a change in order to test. 
-See instructions above for deploying locally.
+1. Open the CAM test page in your web browser.  It is located at
+    http://jenkins.ilrn-support.com/jenkins/job/TestPages/ws/CAM/index.html
 
-1. In the Cengage content CVS repository, locate the "widgets" book, and inside
-it, locate the "widgetConsumer" directory.  Checkout this directory as though
-you were checking out the entire book.
+2. For the "Module Host", choose the "localhost" option that references
+your CengageNOW project.  Change the other parameters as needed, and press the 
+button to load the test page. 
 
-2. Configure an Apache virtual host that points to the project that you just 
-created.
-Be sure to restart Apache.
-[TODO: Add a virtualhost-example.conf and a README similar to this one to the
-book to explain how to setup a virtual host]
-
-3. Open the CAM test page in your web browser.  It is located at
-    http://localhost:9999/testpages/activity-framework-restful.html
-where "localhost:9999" is whatever you named the virtual host for the 
-widgetConsumer project.
-
-4. For the "Module Host", choose the "localhost" option that references
-your CAM project.  Change the other parameters as needed, and press the button
-to load the test page. 
+NOTE: You will need to deploy locally each time you make a change in order to 
+test it using the steps above. See "Building the Project and Deploying Locally" 
+instructions above for information on how to do that.
 
 -------------------------------------------------------------------------------
 Publishing Your Changes
@@ -96,7 +84,7 @@ Deploying Your Changes to a Covalent Host
 Once the new release has been published to Nexus, it can be deployed on any
 Covalent host.
 
-Within the Covalent project itself, use the following Ant target:
+Within the CengageNOW project itself, use the following Ant target:
     ant install-module -DmoduleId=cam 
 This will fetch the latest version of the module.
 
@@ -104,7 +92,7 @@ This will fetch the latest version of the module.
 Updating Covalent (CNOW) to Use the New Version
 -------------------------------------------------------------------------------
 
-Within the Covalent project, edit "root/include/covalent/modules.properties", 
+Within the CengageNOW project, edit "root/include/covalent/modules.properties", 
 and update the version number.  Commit your changes to the project.
 
 -------------------------------------------------------------------------------
